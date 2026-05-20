@@ -119,74 +119,12 @@ app.get('/cars/user/:userId', async (req, res) => {
   }
 });
 
-// app.post('/bookings', async (req, res) => {
-//   try {
-//     const {
-//       userId, userName, userEmail, carId, carName,
-//       carPricePerDay, startDate, endDate, totalDays, totalPrice
-//     } = req.body;
-
-//     if (!userId || !carId || !startDate || !endDate) {
-//       return res.status(400).send({ message: "Missing required fields" });
-//     }
-
-//     const carObjectId = new ObjectId(carId);
-//     const car = await rentalCollection.findOne({ _id: carObjectId });
-//     if (!car || !car.availability) {
-//       return res.status(400).send({ message: "Car is not available for booking" });
-//     }
-
-//     const start = new Date(startDate);
-//     const end = new Date(endDate);
-//     const overlappingBooking = await bookingCollection.findOne({
-//       carId: carObjectId,
-//       status: "confirmed",
-//       $or: [
-//         { startDate: { $lte: end, $gte: start } },
-//         { endDate: { $lte: end, $gte: start } },
-//         { startDate: { $lte: start }, endDate: { $gte: end } }
-//       ]
-//     });
-//     if (overlappingBooking) {
-//       return res.status(409).send({ message: "Car already booked for selected dates" });
-//     }
-
-//     const booking = {
-//       userId,
-//       userName,
-//       userEmail,
-//       carId: carObjectId,
-//       carName,
-//       carPricePerDay,
-//       startDate: start,
-//       endDate: end,
-//       totalDays,
-//       totalPrice,
-//       bookingDate: new Date(),
-//       status: "confirmed"
-//     };
-
-//     const result = await bookingCollection.insertOne(booking);
-//     await rentalCollection.updateOne(
-//       { _id: carObjectId },
-//       { $set: { availability: false } }
-//     );
-
-//     res.status(201).send({
-//       message: "Booking created successfully",
-//       bookingId: result.insertedId
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send({ message: "Failed to create booking", error: error.message });
-//   }
-// });
-
 app.post('/bookings', async (req, res) => {
   try {
     const {
       userId, userName, userEmail, carId, carName, carImage,
-      carPricePerDay, startDate, endDate, totalDays, totalPrice
+      carPricePerDay, startDate, endDate, totalDays, totalPrice,
+      driverNeeded, specialNote
     } = req.body;
 
     if (!userId || !carId || !startDate || !endDate) {
@@ -220,12 +158,14 @@ app.post('/bookings', async (req, res) => {
       userEmail,
       carId: carObjectId,
       carName,
-      carImage,                // ✅ Add this line
+      carImage,
       carPricePerDay,
       startDate: start,
       endDate: end,
       totalDays,
       totalPrice,
+      driverNeeded: driverNeeded || "No",
+      specialNote: specialNote || "",
       bookingDate: new Date(),
       status: "confirmed"
     };
