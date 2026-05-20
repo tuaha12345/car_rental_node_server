@@ -108,6 +108,17 @@ app.get('/cars/search/:name', async (req, res) => {
   }
 });
 
+app.get('/cars/user/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const query = { owner_id: userId };
+    const cars = await rentalCollection.find(query).toArray();
+    res.send(cars);
+  } catch (error) {
+    res.status(500).send({ message: "Failed to fetch user's cars", error });
+  }
+});
+
 app.post('/bookings', async (req, res) => {
   try {
     const {
