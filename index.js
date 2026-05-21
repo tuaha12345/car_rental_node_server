@@ -173,7 +173,10 @@ app.post('/bookings', async (req, res) => {
     const result = await bookingCollection.insertOne(booking);
     await rentalCollection.updateOne(
       { _id: carObjectId },
-      { $set: { availability: false } }
+      { 
+        $set: { availability: false },
+        $inc: { booking_count: 1 }
+      }
     );
 
     res.status(201).send({
@@ -183,6 +186,16 @@ app.post('/bookings', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: "Failed to create booking", error: error.message });
+  }
+});
+
+app.get('/bookings/count/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const count = await bookingCollection.countDocuments({ userId, status: "confirmed" });
+    res.send({ count });
+  } catch (error) {
+    res.status(500).send({ message: "Failed to fetch count", error });
   }
 });
 
