@@ -3,6 +3,7 @@ dotenv.config();
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -24,6 +25,31 @@ let db;
 let rentalCollection;
 let bookingCollection;
 
+const JWKS = createRemoteJWKSet(new URL(`${process.env.CLIENT_URL}/api/auth/jwks`));
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload);
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+};
+
+
+
+
+
 async function connectDB() {
   try {
     await client.connect();
@@ -44,7 +70,7 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-app.post('/cars', async (req, res) => {
+app.post('/cars', verifyToken,  async (req, res) => {
   try {
     const newCar = req.body;
     const result = await rentalCollection.insertOne(newCar);
@@ -54,7 +80,7 @@ app.post('/cars', async (req, res) => {
   }
 });
 
-app.patch('/cars/:id', async (req, res) => {
+app.patch('/cars/:id', verifyToken, async (req, res) => {
   try {
     const id = req.params.id;
     const updatedCar = req.body;
@@ -66,7 +92,7 @@ app.patch('/cars/:id', async (req, res) => {
   }
 });
 
-app.delete('/cars/:id', async (req, res) => {
+app.delete('/cars/:id', verifyToken, async (req, res) => {
   try {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) };
@@ -108,7 +134,7 @@ app.get('/cars/search/:name', async (req, res) => {
   }
 });
 
-app.get('/cars/user/:userId', async (req, res) => {
+app.get('/cars/user/:userId', verifyToken, async (req, res) => {
   try {
     const userId = req.params.userId;
     const query = { owner_id: userId };
@@ -119,7 +145,7 @@ app.get('/cars/user/:userId', async (req, res) => {
   }
 });
 
-app.post('/bookings', async (req, res) => {
+app.post('/bookings', verifyToken, async (req, res) => {
   try {
     const {
       userId, userName, userEmail, carId, carName, carImage,
@@ -199,7 +225,7 @@ app.get('/bookings/count/:userId', async (req, res) => {
   }
 });
 
-app.get('/bookings/user/:userId', async (req, res) => {
+app.get('/bookings/user/:userId', verifyToken, async (req, res) => {
   try {
     const userId = req.params.userId;
     const bookings = await bookingCollection.find({ userId }).toArray();
@@ -247,7 +273,7 @@ app.patch('/bookings/:id/status', async (req, res) => {
   }
 });
 
-app.delete('/bookings/:id', async (req, res) => {
+app.delete('/bookings/:id', verifyToken, async (req, res) => {
   try {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) };
