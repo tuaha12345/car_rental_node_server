@@ -52,11 +52,11 @@ const verifyToken = async (req, res, next) => {
 
 async function connectDB() {
   try {
-    await client.connect();
+    // await client.connect();
     db = client.db("CarRental");
     rentalCollection = db.collection('CarRentalCollection');
     bookingCollection = db.collection('MyBookingCollection');
-    await db.command({ ping: 1 });
+    // await db.command({ ping: 1 });
     console.log("Connected to MongoDB!");
   } catch (error) {
     console.error("Failed to connect to MongoDB", error);
